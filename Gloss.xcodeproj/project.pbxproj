@@ -680,6 +680,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 2.3;
 			};
 			name = Debug;
 		};
@@ -698,6 +699,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.harlankellaway.Gloss;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 2.3;
 			};
 			name = Release;
 		};
@@ -796,6 +798,7 @@
 				2FA4CEA31C947E3000EB8AB8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		A04168FC1C0DF69A00269A6A /* Build configuration list for PBXNativeTarget "Gloss tvOS" */ = {
 			isa = XCConfigurationList;

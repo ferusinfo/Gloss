@@ -41,11 +41,32 @@ public struct Decoder {
     public static func decode<T>(key: String, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> T? {
         return {
             json in
-            
-            if let value = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) as? T {
-                return value
+            var nestedKeys = key.characters.split{$0 == keyPathDelimiter}.map(String.init)
+            if nestedKeys.count <= 1 {
+                if let value = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) as? T {
+                    return value
+                }
+            } else {
+                return valueforNestedKeys(keys: nestedKeys)
             }
-            
+        }
+    }
+    
+    func valueforNestedKeys<T>(keys: [String]) -> T? {
+        var nestedKeysDict = [:]
+        for (nKey, index) in keys {
+            nestedKeysDict[index] = nKey
+        }
+        
+        return findValueInJSON(json: json, dict: nestedKeysDict, currentLevel: 0, levelsCount: nestedKeysDict.allKeys.count)
+    }
+    
+    func findValueInJSON<T>(json: JSON, dict: String, currentLevel: Int,levelsCount: Int ) -> T? {
+        if currentLevel == levelsCount-1 {
+           return json[dict[currentLevel]]
+        } else if let newJson = json[dict[currentLevel]] {
+            return findValueInJSON(json: newJson, dict: dict, currentLevel: currentLevel+1, levelsCount: levelsCount)
+        } else {
             return nil
         }
     }
@@ -464,7 +485,7 @@ public struct Decoder {
             json in
             
             if let urlString = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) as? String,
-                encodedString = urlString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet()) {
+                let encodedString = urlString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet()) {
                 return NSURL(string: encodedString)
             }
             
