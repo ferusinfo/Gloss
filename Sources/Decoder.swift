@@ -41,33 +41,37 @@ public struct Decoder {
     public static func decode<T>(key: String, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> T? {
         return {
             json in
-            var nestedKeys = key.characters.split{$0 == keyPathDelimiter}.map(String.init)
-            if nestedKeys.count <= 1 {
-                if let value = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) as? T {
+            return Decoder.valueForKey(key, keyPathDelimiter: keyPathDelimiter) as? T
+        }
+    }
+    
+    public static func valueForKey(key: String, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> AnyObject? {
+        return {
+            json in
+            let keyPaths = key.componentsSeparatedByString(keyPathDelimiter)
+            if keyPaths.count <= 1 {
+                if let value = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) {
                     return value
                 }
             } else {
-                return valueforNestedKeys(keys: nestedKeys)
+                return Decoder.findValueInJSON(keyPaths)(json)
             }
-        }
-    }
-    
-    func valueforNestedKeys<T>(keys: [String]) -> T? {
-        var nestedKeysDict = [:]
-        for (nKey, index) in keys {
-            nestedKeysDict[index] = nKey
-        }
-        
-        return findValueInJSON(json: json, dict: nestedKeysDict, currentLevel: 0, levelsCount: nestedKeysDict.allKeys.count)
-    }
-    
-    func findValueInJSON<T>(json: JSON, dict: String, currentLevel: Int,levelsCount: Int ) -> T? {
-        if currentLevel == levelsCount-1 {
-           return json[dict[currentLevel]]
-        } else if let newJson = json[dict[currentLevel]] {
-            return findValueInJSON(json: newJson, dict: dict, currentLevel: currentLevel+1, levelsCount: levelsCount)
-        } else {
+            
             return nil
+        }
+    }
+    
+    public static func findValueInJSON<T>(keys: [String], depthLevel: Int = 0) -> JSON -> T? {
+        return {
+            json in
+            let currentKey = keys[depthLevel]
+            if depthLevel == keys.count-1 {
+               return json[currentKey] as? T
+            } else if let newJson = json[currentKey] as? JSON {
+                return Decoder.findValueInJSON(keys, depthLevel: depthLevel+1)(newJson)
+            } else {
+                return nil
+            }
         }
     }
     
@@ -84,7 +88,7 @@ public struct Decoder {
         return {
             json in
             
-            if let dateString = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) as? String {
+            if let dateString = Decoder.valueForKey(key, keyPathDelimiter: keyPathDelimiter)(json) as? String {
                 return dateFormatter.dateFromString(dateString)
             }
             
