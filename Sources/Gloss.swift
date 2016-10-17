@@ -115,3 +115,5 @@ public func jsonify(array: [JSON?], keyPathDelimiter: String = GlossKeyPathDelim
     
     return json
 }
+
+
