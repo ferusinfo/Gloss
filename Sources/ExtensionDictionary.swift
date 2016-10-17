@@ -27,6 +27,12 @@ import Foundation
 
 public extension Dictionary {
     
+    mutating func mergeWith(other:Dictionary) {
+        for (key,value) in other {
+            self.updateValue(value, forKey:key)
+        }
+    }
+    
     // MARK: - Public functions
     
     /**
@@ -45,23 +51,25 @@ public extension Dictionary {
     public func valueForKeyPath(keyPath: String, withDelimiter delimiter: String = GlossKeyPathDelimiter) -> AnyObject? {
         let keys = keyPath.componentsSeparatedByString(delimiter)
         
-        guard let first = keys.first as? Key else {
+        guard keys.first as? Key != nil else {
             print("[Gloss] Unable to use keyPath '\(keyPath)' as key on type: \(Key.self)")
             return nil
         }
         
-        guard let value = self[first] as? AnyObject else {
-            return nil
-        }
-        
-        if keys.count > 1, let subDict = value as? JSON {
-            let rejoined = keys[1..<keys.endIndex].joinWithSeparator(delimiter)
-        
-            return subDict.valueForKeyPath(rejoined, withDelimiter: delimiter)
-        }
-        
-        return value
+        return self.findValue(keys)
     }
+    
+    func findValue(keys: [String], depthLevel: Int = 0) -> AnyObject? {
+        if let currentKey = keys[depthLevel] as? Key {
+            if depthLevel == keys.count-1 {
+                return self[currentKey] as? AnyObject
+            } else if let newDict = self[currentKey] as? Dictionary {
+                return newDict.findValue(keys, depthLevel: depthLevel+1)
+            }
+        }
+        return nil
+    }
+    
     
     // MARK: - Internal functions
     
@@ -105,7 +113,7 @@ public extension Dictionary {
     internal mutating func add(other: Dictionary, delimiter: String = GlossKeyPathDelimiter) -> () {
         for (key, value) in other {
             if let key = key as? String {
-                self.setValue(valueToSet: value, forKeyPath: key, withDelimiter: delimiter)
+                self.setValue(value, forKeyPath: key, withDelimiter: delimiter)
             } else {
                 self.updateValue(value, forKey:key)
             }
@@ -121,18 +129,37 @@ public extension Dictionary {
      - parameter keyPath:       Key path.
      - parameter withDelimiter: Delimiter for key path.
      */
-    private mutating func setValue(valueToSet value: Any, forKeyPath keyPath: String, withDelimiter delimiter: String = GlossKeyPathDelimiter) {
-        var keys = keyPath.componentsSeparatedByString(delimiter)
+    private mutating func setValue(value: Any, forKeyPath: String, withDelimiter: String = GlossKeyPathDelimiter) {
+        var keys = forKeyPath.componentsSeparatedByString(withDelimiter)
         
         guard let first = keys.first as? Key else {
             print("[Gloss] Unable to use string as key on type: \(Key.self)")
             return
         }
         
+        if let value = value as? Value {
+            keys.removeAtIndex(0)
+            if keys.count > 0 {
+                if let valueToSet = self.setValueForNestedKeys(self, value: value, keys: keys) as? Dictionary {
+                    if let dict = self[first] as? Dictionary {
+                        dict.mergeWith(valueToSet)
+                    } else {
+                        self[first] = valueToSet
+                    }
+                }
+            } else {
+                self[first] = value
+            }
+        }
+
+        
+        
+        
+        /*
         keys.removeAtIndex(0)
         
-        if keys.isEmpty, let settable = value as? Value {
-            self[first] = settable
+        if keys.isEmpty {
+            self[first] = value
         } else {
             let rejoined = keys.joinWithSeparator(delimiter)
             var subdict: JSON = [ : ]
@@ -141,15 +168,37 @@ public extension Dictionary {
                 subdict = sub
             }
             
-            subdict.setValue(valueToSet: value, forKeyPath: rejoined, withDelimiter: delimiter)
+            subdict.setValue(valueToSet:value as! AnyObject, forKeyPath: rejoined, withDelimiter: delimiter)
+            
             
             if let settable = subdict as? Value {
                 self[first] = settable
             } else {
                 print("[Gloss] Unable to set value: \(subdict) to dictionary of type: \(self.dynamicType)")
             }
-        }
-        
+        }*/
     }
+    
+    private func setValueForNestedKeys(dict: Dictionary, value: Value, keys: [String]) -> Value? {
+        var mdict = dict
+        if let key = keys.first as? Key {
+            if keys.count == 1 {
+                mdict[key] = value
+            } else {
+                var keysM = keys
+                keysM.removeAtIndex(0)
+                mdict[key] = self.setValueForNestedKeys(mdict, value: value, keys: keysM)
+            }
+            
+            if let settable = mdict as? Value {
+                return settable
+            } else {
+                print("[Gloss] Unable to set value: \(subdict) to dictionary of type: \(self.dynamicType)")
+            }
+        }
+        return nil
+    }
+    
+    
     
 }

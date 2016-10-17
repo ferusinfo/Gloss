@@ -41,16 +41,16 @@ public struct Decoder {
     public static func decode<T>(key: String, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> T? {
         return {
             json in
-            return Decoder.valueForKey(key, keyPathDelimiter: keyPathDelimiter) as? T
+            return Decoder.valueForNestedKey(key, withDelimiter: keyPathDelimiter)(json) as? T
         }
     }
     
-    public static func valueForKey(key: String, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> AnyObject? {
+    public static func valueForNestedKey(key: String, withDelimiter: String = GlossKeyPathDelimiter) -> JSON -> AnyObject? {
         return {
             json in
-            let keyPaths = key.componentsSeparatedByString(keyPathDelimiter)
+            let keyPaths = key.componentsSeparatedByString(withDelimiter)
             if keyPaths.count <= 1 {
-                if let value = json.valueForKeyPath(key, withDelimiter: keyPathDelimiter) {
+                if let value = json.valueForKeyPath(key, withDelimiter: withDelimiter) {
                     return value
                 }
             } else {
@@ -60,6 +60,7 @@ public struct Decoder {
             return nil
         }
     }
+    
     
     public static func findValueInJSON<T>(keys: [String], depthLevel: Int = 0) -> JSON -> T? {
         return {
@@ -87,8 +88,7 @@ public struct Decoder {
     public static func decodeDate(key: String, dateFormatter: NSDateFormatter, keyPathDelimiter: String = GlossKeyPathDelimiter) -> JSON -> NSDate? {
         return {
             json in
-            
-            if let dateString = Decoder.valueForKey(key, keyPathDelimiter: keyPathDelimiter)(json) as? String {
+            if let dateString = Decoder.valueForNestedKey(key, withDelimiter: keyPathDelimiter)(json) as? String {
                 return dateFormatter.dateFromString(dateString)
             }
             
@@ -168,7 +168,6 @@ public struct Decoder {
             }
             
             return nil
-            
         }
     }
     
