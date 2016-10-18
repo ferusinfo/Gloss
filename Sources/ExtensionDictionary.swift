@@ -117,37 +117,41 @@ public extension Dictionary {
 }
 
 public extension Dictionary {
-    internal mutating func add(other: Dictionary, delimiter: String = GlossKeyPathDelimiter) -> () {
-        for (key, value) in other {
-            if let key = key as? String {
-                Dictionary.setValue(&self, value: value, forKeyPath: key, withDelimiter: delimiter)
-            } else {
-                self.updateValue(value, forKey:key)
-            }
-        }
-    }
+//    internal mutating func add(other: Dictionary, delimiter: String = GlossKeyPathDelimiter) -> () {
+//        for (key, value) in other {
+//            if let key = key as? String {
+//                NestedEncoder.setValue(self, value: value, forKeyPath: key, withDelimiter: delimiter)
+//            } else {
+//                self.updateValue(value, forKey:key)
+//            }
+//        }
+//    }
 
-    public static func setValue(inout dict: Dictionary<Key,Value>, value: AnyObject, forKeyPath: String, withDelimiter: String = GlossKeyPathDelimiter) {
+    
+}
+
+public class NestedEncoder {
+    public static func setValue(inout dict: JSON, value: AnyObject, forKeyPath: String, withDelimiter: String = GlossKeyPathDelimiter) {
         
-        var keys = forKeyPath.componentsSeparatedByString(withDelimiter)
+        var keyComponents = forKeyPath.componentsSeparatedByString(withDelimiter)
         
-        guard let firstKey = keys.first as? String else {
+        guard let firstKey = keyComponents.first else {
             return
         }
         
-        keys.removeAtIndex(0)
+        keyComponents.removeAtIndex(0)
         
-        if keys.isEmpty {
-            self[firstKey] = value
+        if keyComponents.isEmpty {
+            dict[firstKey] = value
         } else {
-            let rejoined = keys.joinWithSeparator(withDelimiter)
-            var subdict : Dictionary<String, AnyObject> = [:]
+            let rejoined = keyComponents.joinWithSeparator(withDelimiter)
+            var subdict : JSON = [:]
             
-            if let existingSubDict = &dict[firstKey] as? Dictionary<Key,Value> {
+            if let existingSubDict = dict[firstKey] as? JSON {
                 subdict = existingSubDict
             }
             
-            Dictionary.setValue(&subdict, value:value, forKeyPath: rejoined, withDelimiter: withDelimiter)
+            NestedEncoder.setValue(&subdict, value:value, forKeyPath: rejoined, withDelimiter: withDelimiter)
             dict[firstKey] = subdict
             
         }
