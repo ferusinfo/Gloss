@@ -52,7 +52,15 @@ public extension Dictionary {
         return self.findValue(keys)
     }
     
-    func findValue(keys: [String], depthLevel: Int = 0) -> AnyObject? {
+    /**
+     Retrieves value from dictionary given a key path delimited with
+     provided delimiter by going down the dictionary stack tree
+     
+     - parameter keys: Array of keys splited by delimiter
+     - parameter depthLevel: Indicates current depth level in the dictionary tree
+     - returns: object retrieved from dic
+    */
+    private func findValue(keys: [String], depthLevel: Int = 0) -> AnyObject? {
         if let currentKey = keys[depthLevel] as? Key {
             if depthLevel == keys.count-1 {
                 return self[currentKey] as? AnyObject
@@ -62,7 +70,6 @@ public extension Dictionary {
         }
         return nil
     }
-    
     
     // MARK: - Internal functions
     
@@ -92,68 +99,5 @@ public extension Dictionary {
         return Dictionary<KeyPrime,ValuePrime>(elements: try flatMap({ (key, value) in
             return try transform(key, value)
         }))
-    }
-    
-    /**
-     Adds entries from provided dictionary to current dictionary.
-     
-     Note: If current dictionary and provided dictionary have the same
-     key, the value from the provided dictionary overwrites current value.
-     
-     - parameter other:     Dictionary to add entries from
-     - parameter delimiter: Key path delimiter
-     */
-
-    
-    // MARK: - Private functions
-
-    /**
-     Sets value for provided key path delimited by provided delimiter.
-     
-     - parameter valueToSet:    Value to set
-     - parameter keyPath:       Key path.
-     - parameter withDelimiter: Delimiter for key path.
-     */
-}
-
-public extension Dictionary {
-//    internal mutating func add(other: Dictionary, delimiter: String = GlossKeyPathDelimiter) -> () {
-//        for (key, value) in other {
-//            if let key = key as? String {
-//                NestedEncoder.setValue(self, value: value, forKeyPath: key, withDelimiter: delimiter)
-//            } else {
-//                self.updateValue(value, forKey:key)
-//            }
-//        }
-//    }
-
-    
-}
-
-public class NestedEncoder {
-    public static func setValue(inout dict: JSON, value: AnyObject, forKeyPath: String, withDelimiter: String = GlossKeyPathDelimiter) {
-        
-        var keyComponents = forKeyPath.componentsSeparatedByString(withDelimiter)
-        
-        guard let firstKey = keyComponents.first else {
-            return
-        }
-        
-        keyComponents.removeAtIndex(0)
-        
-        if keyComponents.isEmpty {
-            dict[firstKey] = value
-        } else {
-            let rejoined = keyComponents.joinWithSeparator(withDelimiter)
-            var subdict : JSON = [:]
-            
-            if let existingSubDict = dict[firstKey] as? JSON {
-                subdict = existingSubDict
-            }
-            
-            NestedEncoder.setValue(&subdict, value:value, forKeyPath: rejoined, withDelimiter: withDelimiter)
-            dict[firstKey] = subdict
-            
-        }
     }
 }

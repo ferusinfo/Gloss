@@ -110,7 +110,7 @@ public func jsonify(array: [JSON?], keyPathDelimiter: String = GlossKeyPathDelim
     for j in array {
         if(j != nil) {
             for (key,value) in j! {
-                NestedEncoder.setValue(&json, value: value, forKeyPath: key, withDelimiter: keyPathDelimiter)
+                Encoder.setValue(&json, value: value, forKeyPath: key, withDelimiter: keyPathDelimiter)
             }
         }
     }
